@@ -1,14 +1,17 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
-    Rigidbody rb;
+    // 移動速度
+    public float moveSpeed = 6.0f;
+    // ジャンプ力
+    public float jumpForce = 5.0f;
+    // 落下リスタートする高さ
+    public float fallLimitY = -5.0f;
 
-    public float moveSpeed = 5f;
-    public float jumpPower = 7f;
-
-    bool isGround = false;
-
+    private Rigidbody rb;
+    private bool isGrounded = true;
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -16,39 +19,36 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        float x = Input.GetAxis("Horizontal");
+        // 左右移動
+        float moveInput = Input.GetAxis("Horizontal");
+        rb.velocity = new Vector3(moveInput * moveSpeed, rb.velocity.y, 0f);
 
-        rb.velocity = new Vector3(
-            x * moveSpeed,
-            rb.velocity.y,
-            0
-        );
-
-        if (Input.GetKeyDown(KeyCode.Space) && isGround)
+        // ジャンプ
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
-            rb.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            isGrounded = false;
         }
 
-        if (transform.position.y < -5)
+        // 落下判定
+        if (transform.position.y < fallLimitY)
         {
-            transform.position = new Vector3(0, 1, 0);
-            rb.velocity = Vector3.zero;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
 
-    void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGround = true;
-        }
+        // 接地判定
+        isGrounded = true;
     }
 
-    void OnCollisionExit(Collision collision)
+private void OnTriggerEnter(Collider other)
     {
-        if (collision.gameObject.CompareTag("Ground"))
+        // ゴール判定
+        if (other.CompareTag("Goal"))
         {
-            isGround = false;
+            SceneManager.LoadScene("ClearScene");
         }
     }
 }
